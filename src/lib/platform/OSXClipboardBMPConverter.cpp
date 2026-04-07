@@ -76,10 +76,15 @@ std::string OSXClipboardBMPConverter::fromIClipboard(const std::string &bmp) con
   const uint8_t *rawDIB = reinterpret_cast<const uint8_t *>(bmp.data());
   uint32_t biSize = fromLEU32(rawDIB);
 
+  // validate biSize is reasonable
+  if (biSize < 40 || biSize > 1024) {
+    return std::string();
+  }
+
   // compute pixel data offset: file header + DIB header + color table
   uint32_t pixelOffset = 14 + biSize;
 
-  if (biSize >= 40 && bmp.size() >= 40) {
+  if (bmp.size() >= biSize) {
     uint16_t biBitCount = fromLEU16(rawDIB + 14);
     uint32_t biCompression = fromLEU32(rawDIB + 16);
     uint32_t biClrUsed = fromLEU32(rawDIB + 32);

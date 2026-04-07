@@ -42,10 +42,13 @@ MSWindowsClipboardAnyTextConverter::fromIClipboard(const std::string &data) cons
 
 std::string MSWindowsClipboardAnyTextConverter::toIClipboard(HANDLE data) const
 {
-  // get datator
+  // get data pointer
   const char *src = (const char *)GlobalLock(data);
   uint32_t srcSize = (uint32_t)GlobalSize(data);
   if (src == nullptr || srcSize <= 1) {
+    if (src != nullptr) {
+      GlobalUnlock(data);
+    }
     return std::string();
   }
 
@@ -97,7 +100,7 @@ std::string MSWindowsClipboardAnyTextConverter::convertLinefeedToUnix(const std:
   uint32_t numNewlines = 0;
   uint32_t n = (uint32_t)src.size();
   for (const char *scan = src.c_str(); n > 0; ++scan, --n) {
-    if (scan[0] == '\r' && scan[1] == '\n') {
+    if (scan[0] == '\r' && n > 1 && scan[1] == '\n') {
       ++numNewlines;
     }
   }
@@ -112,7 +115,7 @@ std::string MSWindowsClipboardAnyTextConverter::convertLinefeedToUnix(const std:
   // copy string, converting newlines
   n = (uint32_t)src.size();
   for (const char *scan = src.c_str(); n > 0; ++scan, --n) {
-    if (scan[0] != '\r' || scan[1] != '\n') {
+    if (scan[0] != '\r' || n <= 1 || scan[1] != '\n') {
       dst += scan[0];
     }
   }
