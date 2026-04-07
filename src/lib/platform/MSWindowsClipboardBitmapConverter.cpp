@@ -88,16 +88,20 @@ std::string MSWindowsClipboardBitmapConverter::toIClipboard(HANDLE data) const
 
   // find the start of the pixel data
   const char *srcBits = (const char *)bitmap + bitmap->bmiHeader.biSize;
-  if (bitmap->bmiHeader.biBitCount >= 16) {
-    if (bitmap->bmiHeader.biCompression == BI_BITFIELDS &&
-        (bitmap->bmiHeader.biBitCount == 16 || bitmap->bmiHeader.biBitCount == 32)) {
-      srcBits += 3 * sizeof(DWORD);
+  // Only BITMAPINFOHEADER (40 bytes) has color masks/table after the header.
+  // BITMAPV4HEADER (108 bytes) and BITMAPV5HEADER (124 bytes) include
+  // masks and color space info within the header itself.
+  if (bitmap->bmiHeader.biSize == sizeof(BITMAPINFOHEADER)) {
+    if (bitmap->bmiHeader.biBitCount >= 16) {
+      if (bitmap->bmiHeader.biCompression == BI_BITFIELDS &&
+          (bitmap->bmiHeader.biBitCount == 16 || bitmap->bmiHeader.biBitCount == 32)) {
+        srcBits += 3 * sizeof(DWORD);
+      }
+    } else if (bitmap->bmiHeader.biClrUsed != 0) {
+      srcBits += bitmap->bmiHeader.biClrUsed * sizeof(RGBQUAD);
+    } else {
+      srcBits += (1i64 << bitmap->bmiHeader.biBitCount) * sizeof(RGBQUAD);
     }
-  } else if (bitmap->bmiHeader.biClrUsed != 0) {
-    srcBits += bitmap->bmiHeader.biClrUsed * sizeof(RGBQUAD);
-  } else {
-    // http://msdn.microsoft.com/en-us/library/ke55d167(VS.80).aspx
-    srcBits += (1i64 << bitmap->bmiHeader.biBitCount) * sizeof(RGBQUAD);
   }
 
   // copy source image to destination image
