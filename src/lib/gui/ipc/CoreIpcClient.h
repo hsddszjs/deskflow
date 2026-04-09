@@ -12,20 +12,15 @@
 
 namespace deskflow::gui::ipc {
 
-class DaemonIpcClient : public IpcClient
+class CoreIpcClient : public IpcClient
 {
   Q_OBJECT
 
 public:
-  explicit DaemonIpcClient(QObject *parent = nullptr);
-  void sendLogLevel(const QString &logLevel);
-  void sendStartProcess(const QString &command, bool elevate);
-  void sendStopProcess();
-  void sendClearSettings();
-  void requestLogPath();
+  explicit CoreIpcClient(QObject *parent = nullptr);
 
 Q_SIGNALS:
-  void logPathReceived(const QString &logPath);
+  void commandReceived(const QString &command, const QString &args);
 
 protected:
   void processCommand(const QString &command, const QStringList &parts) override;

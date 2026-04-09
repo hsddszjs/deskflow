@@ -18,6 +18,7 @@
 #include "deskflow/ProtocolTypes.h"
 #include "deskflow/Screen.h"
 #include "deskflow/ScreenException.h"
+#include "deskflow/ipc/CoreIpc.h"
 #include "net/SocketException.h"
 #include "net/SocketMultiplexer.h"
 #include "net/TCPSocketFactory.h"
@@ -43,9 +44,6 @@
 #endif
 
 #if defined(Q_OS_MAC)
-#include "base/TMethodJob.h"
-#include "mt/Thread.h"
-#include "platform/OSXCocoaApp.h"
 #include "platform/OSXScreen.h"
 #endif
 
@@ -373,7 +371,8 @@ bool ServerApp::startServer()
     listener->setServer(m_server);
     m_server->setListener(listener);
     m_listener = listener;
-    LOG_IPC("started server, waiting for clients");
+    LOG_DEBUG("started server, waiting for clients");
+    ipcSendConnectionState(deskflow::core::ConnectionState::Listening);
     m_serverState = Started;
     return true;
   } catch (SocketAddressInUseException &e) {
@@ -541,18 +540,7 @@ int ServerApp::mainLoop()
   // later.  the timer installed by startServer() will take care of
   // that.
 
-#if defined(Q_OS_MAC)
-
-  Thread thread(new TMethodJob<ServerApp>(this, &ServerApp::runEventsLoop, nullptr));
-
-  // wait until carbon loop is ready
-  OSXScreen *screen = dynamic_cast<OSXScreen *>(m_serverScreen->getPlatformScreen());
-  screen->waitForCarbonLoop();
-
-  runCocoaApp();
-#else
   getEvents()->loop();
-#endif
 
   // close down
   LOG_DEBUG("stopping server");

@@ -1,7 +1,7 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
  * SPDX-FileCopyrightText: (C) 2025 Chris Rizzitello <sithlord48@gmail.com>
- * SPDX-FileCopyrightText: (C) 2012 - 2016 Symless Ltd.
+ * SPDX-FileCopyrightText: (C) 2012 - 2016, 2025 - 2026 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -15,27 +15,41 @@
 #include "common/ExitCodes.h"
 #include "deskflow/ClientApp.h"
 #include "deskflow/ServerApp.h"
+#include "deskflow/ipc/CoreIpcServer.h"
 
 #if defined(Q_OS_WIN)
 #include "arch/win32/ArchMiscWindows.h"
 #include <QCoreApplication>
 #endif
 
+#include <QCoreApplication>
 #include <QFileInfo>
 #include <QSharedMemory>
 #include <QTextStream>
+#include <QThread>
 
 void showHelp(const CoreArgParser &parser)
 {
   QTextStream(stdout) << parser.helpText();
 }
 
+App *createApp(const CoreArgParser &parser, EventQueue &events, const QString &processName)
+{
+  if (parser.serverMode()) {
+    return new ServerApp(&events, processName);
+  } else if (parser.clientMode()) {
+    return new ClientApp(&events, processName);
+  }
+  return nullptr;
+}
+
 int main(int argc, char **argv)
 {
 #if defined(Q_OS_WIN)
-  // HACK to make sure settings gets the correct qApp path
-  QCoreApplication m(argc, argv);
-  m.deleteLater();
+  {
+    // HACK to make sure settings gets the correct qApp path
+    QCoreApplication m(argc, argv);
+  }
 
   ArchMiscWindows::setInstanceWin32(GetModuleHandle(nullptr));
 #endif
@@ -86,13 +100,21 @@ int main(int argc, char **argv)
   EventQueue events;
   const auto processName = QFileInfo(argv[0]).fileName();
 
-  if (parser.serverMode()) {
-    ServerApp app(&events, processName);
-    return app.run();
-  } else if (parser.clientMode()) {
-    ClientApp app(&events, processName);
-    return app.run();
-  }
+  App *coreApp = createApp(parser, events, processName);
 
-  return s_exitSuccess;
+  QCoreApplication app(argc, argv);
+  QCoreApplication::setApplicationName(QStringLiteral("%1 Core").arg(kAppName));
+
+  const auto ipcServer = new deskflow::core::ipc::CoreIpcServer(&app); // NOSONAR - Qt managed
+  ipcServer->listen();
+
+  QThread coreThread;
+  QObject::connect(&coreThread, &QThread::finished, &app, &QCoreApplication::quit);
+  coreApp->run(coreThread);
+
+  const auto exitCode = QCoreApplication::exec();
+  coreThread.wait();
+
+  LOG_DEBUG("core exited, code: %d", exitCode);
+  return exitCode;
 }
