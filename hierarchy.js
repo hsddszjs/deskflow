@@ -17,9 +17,6 @@ var hierarchy =
       [ "AppUtilUnix", "classAppUtilUnix.html", null ],
       [ "AppUtilWindows", "classAppUtilWindows.html", null ]
     ] ],
-    [ "ARCH_DAEMON", null, [
-      [ "Arch", "classArch.html", null ]
-    ] ],
     [ "ARCH_LOG", null, [
       [ "Arch", "classArch.html", null ]
     ] ],
@@ -77,6 +74,7 @@ var hierarchy =
       [ "Chunk", "classChunk.html", [
         [ "ClipboardChunk", "classClipboardChunk.html", null ]
       ] ],
+      [ "ExitEventData", "classExitEventData.html", null ],
       [ "Server::KeyboardBroadcastInfo", "classServer_1_1KeyboardBroadcastInfo.html", null ],
       [ "Server::LockCursorToScreenInfo", "classServer_1_1LockCursorToScreenInfo.html", null ],
       [ "Server::SwitchInDirectionInfo", "classServer_1_1SwitchInDirectionInfo.html", null ],
@@ -106,7 +104,6 @@ var hierarchy =
       ] ]
     ] ],
     [ "IArchDaemon", "classIArchDaemon.html", [
-      [ "ArchDaemonNone", "classArchDaemonNone.html", null ],
       [ "ArchDaemonWindows", "classArchDaemonWindows.html", null ]
     ] ],
     [ "IArchLog", "classIArchLog.html", [
@@ -284,6 +281,7 @@ var hierarchy =
     [ "Lock", "classLock.html", null ],
     [ "Log", "classLog.html", null ],
     [ "Settings::Log", "structSettings_1_1Log.html", null ],
+    [ "App::LoopErrorCode", "structApp_1_1LoopErrorCode.html", null ],
     [ "XWindowsClipboard::MotifClipFormat", "classXWindowsClipboard_1_1MotifClipFormat.html", null ],
     [ "XWindowsClipboard::MotifClipHeader", "classXWindowsClipboard_1_1MotifClipHeader.html", null ],
     [ "XWindowsClipboard::MotifClipItem", "classXWindowsClipboard_1_1MotifClipItem.html", null ],
