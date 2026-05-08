@@ -201,6 +201,8 @@ ServerProxy::ConnectionResult ServerProxy::parseHandshakeMessage(const uint8_t *
     return Unknown;
   }
 
+  // any recognized inbound traffic proves the server is alive
+  resetKeepAliveAlarm();
   return Okay;
 }
 
@@ -320,6 +322,12 @@ ServerProxy::ConnectionResult ServerProxy::parseMessage(const uint8_t *code)
   } else {
     return Unknown;
   }
+
+  // any recognized inbound traffic proves the server is alive; reset
+  // the watchdog so a long bulk transfer (e.g. multi-MB clipboard
+  // chunks from the server) does not starve the explicit keep-alive
+  // echo and trigger a false "server is dead" alarm.
+  resetKeepAliveAlarm();
 
   // send a reply.  this is intended to work around a delay when
   // running a linux server and an OS X (any BSD?) client.  the
