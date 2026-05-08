@@ -27,7 +27,7 @@ void StreamChunker::sendClipboard(
   size_t sentLength = 0;
   size_t chunkSize = g_chunkSize;
 
-  while (true) {
+  while (sentLength < size) {
     // make sure we don't read too much from the mock data.
     if (sentLength + chunkSize > size) {
       chunkSize = size - sentLength;
@@ -39,9 +39,6 @@ void StreamChunker::sendClipboard(
     events->addEvent(Event(EventTypes::ClipboardSending, eventTarget, dataChunk));
 
     sentLength += chunkSize;
-    if (sentLength == size) {
-      break;
-    }
   }
 
   // send last message

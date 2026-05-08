@@ -669,13 +669,25 @@ bool MSWindowsScreen::isAnyMouseButtonDown(uint32_t &buttonID) const
 {
   static const char *buttonToName[] = {"<invalid>",    "Left Button", "Middle Button",
                                        "Right Button", "X Button 1",  "X Button 2"};
+  // index by ButtonID (kButtonNone, kButtonLeft, kButtonMiddle, kButtonRight, X1, X2)
+  static const int vkCodes[] = {0, VK_LBUTTON, VK_MBUTTON, VK_RBUTTON, VK_XBUTTON1, VK_XBUTTON2};
 
   for (uint32_t i = 1; i < sizeof(m_buttons) / sizeof(m_buttons[0]); ++i) {
-    if (m_buttons[i]) {
-      buttonID = i;
-      LOG_DEBUG("locked by \"%s\"", buttonToName[i]);
-      return true;
+    if (!m_buttons[i]) {
+      continue;
     }
+    // verify against actual hardware state: a button-up event from the
+    // low-level hook can be lost (e.g. when the hook is bypassed during
+    // heavy clipboard transfer), leaving the cached state stuck "down"
+    // and the cursor permanently locked to the screen.
+    if (!(GetAsyncKeyState(vkCodes[i]) & 0x8000)) {
+      LOG_WARN("clearing stuck mouse button state: \"%s\"", buttonToName[i]);
+      m_buttons[i] = false;
+      continue;
+    }
+    buttonID = i;
+    LOG_DEBUG("locked by \"%s\"", buttonToName[i]);
+    return true;
   }
 
   return false;
