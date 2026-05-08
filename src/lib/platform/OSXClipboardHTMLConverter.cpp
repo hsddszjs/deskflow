@@ -34,12 +34,12 @@ std::string OSXClipboardHTMLConverter::convertString(
 
   CFStringGetBytes(stringRef, entireString, toEncoding, 0, false, nullptr, 0, &buffSize);
 
-  char *buffer = new char[buffSize];
-
-  if (buffer == nullptr) {
+  if (buffSize <= 0) {
     CFRelease(stringRef);
     return std::string();
   }
+
+  char *buffer = new char[buffSize];
 
   CFStringGetBytes(stringRef, entireString, toEncoding, 0, false, (uint8_t *)buffer, buffSize, nullptr);
 

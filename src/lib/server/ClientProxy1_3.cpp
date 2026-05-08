@@ -39,14 +39,23 @@ void ClientProxy1_3::mouseWheel(int32_t xDelta, int32_t yDelta)
 
 bool ClientProxy1_3::parseMessage(const uint8_t *code)
 {
-  // process message
+  bool handled;
   if (memcmp(code, kMsgCKeepAlive, 4) == 0) {
-    // reset alarm
-    resetHeartbeatTimer();
-    return true;
+    // explicit keep-alive echo from the client
+    handled = true;
   } else {
-    return ClientProxy1_2::parseMessage(code);
+    handled = ClientProxy1_2::parseMessage(code);
   }
+
+  // any recognized inbound traffic proves the client is alive. without
+  // this, a long bulk transfer (e.g. multi-MB clipboard chunks) can
+  // starve the keep-alive echo path - the echo sits behind the bulk
+  // data in the client's send queue - and the heartbeat alarm fires
+  // even though data is actively flowing.
+  if (handled) {
+    resetHeartbeatTimer();
+  }
+  return handled;
 }
 
 void ClientProxy1_3::resetHeartbeatRate()

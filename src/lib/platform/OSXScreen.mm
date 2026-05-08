@@ -810,8 +810,12 @@ void OSXScreen::checkClipboards()
   LOG_DEBUG2("checking clipboard");
   if (m_pasteboard.synchronize()) {
     LOG_DEBUG("clipboard changed");
+    // macOS has a single pasteboard, so we only grab kClipboardClipboard.
+    // Firing kClipboardSelection too would duplicate every payload on the
+    // wire (an N-byte clipboard becomes 2N on the network, both halves
+    // identical). X11 PRIMARY-selection sync from this client is not
+    // supported as a result; X11 still ships its CLIPBOARD via id 0.
     sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardClipboard);
-    sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardSelection);
   }
 }
 

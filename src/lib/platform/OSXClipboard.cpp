@@ -139,6 +139,20 @@ bool OSXClipboard::has(Format format) const
   PasteboardItemID item;
   PasteboardGetItemIdentifier(m_pboard, (CFIndex)1, &item);
 
+  // For bitmap format, only report available if the pasteboard actually
+  // contains native image data (TIFF or PNG). Without this check, macOS
+  // may claim com.microsoft.bmp is available via UTI auto-conversion
+  // for non-image pasteboard content (e.g. file references), but the
+  // actual conversion can hang and block the event loop, causing the
+  // client to disconnect due to keep-alive timeout.
+  if (format == IClipboard::Format::Bitmap) {
+    PasteboardFlavorFlags flags;
+    if (PasteboardGetItemFlavorFlags(m_pboard, item, CFSTR("public.tiff"), &flags) != noErr &&
+        PasteboardGetItemFlavorFlags(m_pboard, item, CFSTR("public.png"), &flags) != noErr) {
+      return false;
+    }
+  }
+
   for (ConverterList::const_iterator index = m_converters.begin(); index != m_converters.end(); ++index) {
     IOSXClipboardConverter *converter = *index;
     if (converter->getFormat() == format) {

@@ -74,7 +74,12 @@ ClipboardChunk::assemble(deskflow::IStream *stream, std::string &dataCached, Cli
   }
 
   if (mark == ChunkType::DataStart) {
-    s_expectedSize = QString::fromStdString(data).toULong();
+    bool ok = false;
+    s_expectedSize = QString::fromStdString(data).toULong(&ok);
+    if (!ok) {
+      LOG_ERR("invalid clipboard size string");
+      return Error;
+    }
     LOG_DEBUG("start receiving clipboard data");
     dataCached.clear();
     return Started;
@@ -86,7 +91,10 @@ ClipboardChunk::assemble(deskflow::IStream *stream, std::string &dataCached, Cli
     if (id >= kClipboardEnd) {
       return Error;
     } else if (s_expectedSize != dataCached.size()) {
-      LOG_ERR("corrupted clipboard data, expected size=%d actual size=%d", s_expectedSize, dataCached.size());
+      LOG_ERR(
+          "corrupted clipboard data, expected size=%zu actual size=%zu", static_cast<size_t>(s_expectedSize),
+          dataCached.size()
+      );
       return Error;
     }
     return Finished;
