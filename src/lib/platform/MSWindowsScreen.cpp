@@ -349,8 +349,9 @@ void MSWindowsScreen::checkClipboards()
   if (m_ownClipboard && !MSWindowsClipboard::isOwnedByDeskflow()) {
     LOG_DEBUG("clipboard changed: lost ownership and no notification received");
     m_ownClipboard = false;
+    // Windows has a single OS clipboard, so we only grab kClipboardClipboard.
+    // See OSXScreen::checkClipboards for the reasoning.
     sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardClipboard);
-    sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardSelection);
   }
 }
 
@@ -1354,8 +1355,9 @@ void MSWindowsScreen::onClipboardChange()
     if (m_ownClipboard) {
       LOG_DEBUG("clipboard changed: lost ownership");
       m_ownClipboard = false;
+      // Windows has a single OS clipboard, so we only grab kClipboardClipboard.
+      // See OSXScreen::checkClipboards for the reasoning.
       sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardClipboard);
-      sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardSelection);
     }
   } else if (!m_ownClipboard) {
     LOG_DEBUG("clipboard changed: %s owned", kAppId);
